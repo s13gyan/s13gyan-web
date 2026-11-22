@@ -1,10 +1,7 @@
-name: Docker Build
+name: Build and Push Docker Image
 
 on:
   push:
-    branches:
-      - '**'
-  pull_request:
     branches:
       - main
 
@@ -18,8 +15,20 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
-      - name: Build Docker image
-        run: docker build --tag docker-practice-lab:${{ github.sha }} .
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
 
-      - name: Show built Docker image
-        run: docker image ls docker-practice-lab:${{ github.sha }}
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ vars.DOCKERHUB_USERNAME }}/s13gyan-docker-practice-lab:latest
+            ${{ vars.DOCKERHUB_USERNAME }}/s13gyan-docker-practice-lab:${{ github.sha }}
