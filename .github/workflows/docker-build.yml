@@ -20,3 +20,6 @@ jobs:
 
       - name: Build Docker image
         run: docker build --tag docker-practice-lab:${{ github.sha }} .
+
+      - name: Show built Docker image
+        run: docker image ls docker-practice-lab:${{ github.sha }}
