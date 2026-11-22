@@ -42,3 +42,27 @@ jobs:
           tags: |
             ${{ vars.DOCKERHUB_USERNAME }}/s13gyan-docker-practice-lab:latest
             ${{ vars.DOCKERHUB_USERNAME }}/s13gyan-docker-practice-lab:${{ github.sha }}
+
+      - name: Pull published image
+        env:
+          IMAGE: ${{ vars.DOCKERHUB_USERNAME }}/s13gyan-docker-practice-lab:${{ github.sha }}
+        run: docker pull "$IMAGE"
+
+      - name: Start and show container
+        env:
+          IMAGE: ${{ vars.DOCKERHUB_USERNAME }}/s13gyan-docker-practice-lab:${{ github.sha }}
+        run: |
+          docker run --detach --name docker-practice-lab --publish 3000:3000 "$IMAGE"
+          for attempt in $(seq 1 15); do
+            if curl --fail --silent --output /dev/null http://127.0.0.1:3000/api/health; then
+              echo "Container is running; app health endpoint responded:"
+              curl --fail --silent --show-error http://127.0.0.1:3000/api/health
+              echo
+              docker ps --filter "name=^/docker-practice-lab$" --format "table {{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}\t{{.Names}}"
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs docker-practice-lab
+          docker ps -a --filter "name=^/docker-practice-lab$" --format "table {{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}\t{{.Names}}"
+          exit 1
